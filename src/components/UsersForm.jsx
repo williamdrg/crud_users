@@ -18,7 +18,6 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
 
   const onSubmit = async ( data ) => {
     if (fileSelected && !fileUrl) {
-      console.log('ajajaja', fileSelected, fileUrl)
       setErrorMessage('Por favor, espera a que la imagen se cargue.');
       return;
     }
@@ -30,9 +29,10 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
     if (dataUser) {
       updateUser('/users', data, dataUser.id)
       setDataUser()
+      setErrorMessage('')
     } else {
       createUser('/users', data)
-
+      setErrorMessage('')
     }
     
     reset(emptyFields)
@@ -84,7 +84,6 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
 
     try {
       const response = await axios.post(`https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_API_KEY}&expiration=3600`, formData);
-      console.log('imagen', response.data.data.url)
       setFileUrl(response.data.data.url);
       setUploading(false);
       setErrorMessage('');

@@ -21,7 +21,6 @@ function App() {
 
   }, [])
 
-  console.log('usuario', users)
   return (
     <div>
       <Header
