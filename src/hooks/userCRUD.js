@@ -14,7 +14,7 @@ const userCRUD = () => {
   }
 
   const createUserApi = (patch, data) => {
-    const url = `${urlBase}/${patch}/`
+    const url = `${urlBase}${patch}/`
     console.log('url', url)
     console.log('datos aaa', data)
     axios.post(url, data)

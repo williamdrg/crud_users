@@ -10,11 +10,26 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
   const [ fileSelected, setFileSelected ] = useState(false);
   const [ errorMessage, setErrorMessage ] = useState('');
   const [ uploading, setUploading ] = useState(false);
+  const [ modalMessage, setModalMessage ] = useState('');
+  const [ isModalVisible, setIsModalVisible ] = useState(false);
 
   useEffect(() => {
     reset(dataUser)
-  }, [dataUser])
+    resetImageState();
+  }, [dataUser, isShow])
 
+
+  const resetImageState = () => {
+    setFileName('');
+    setFileUrl('');
+    setFileSelected(false);
+    setErrorMessage('');
+  };
+
+  const resetForm = () => {
+    reset(emptyFields);
+    resetImageState();
+  };
 
   const onSubmit = async ( data ) => {
     if (fileSelected && !fileUrl) {
@@ -24,39 +39,47 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
 
     if (fileUrl) {
       data.image_url = fileUrl;
-    }
-
-    if (dataUser) {
-      updateUser('/users', data, dataUser.id)
-      setDataUser()
-      setErrorMessage('')
     } else {
-      createUser('/users', data)
-      setErrorMessage('')
+      delete data.image_url;
     }
-    
-    reset(emptyFields)
 
-  }
-
-  const emptyFields = {
-    first_name: '',
-    last_name: '',
-    email: '',
-    birthday: '',
-    password: '',
-    image_url: ''
+    try {
+      if (dataUser) {
+        await updateUser('/users', data, dataUser.id)
+        setDataUser()
+        setErrorMessage('')
+        setFileSelected(false)
+        setFileName('')
+        resetForm();
+        setModalMessage('Usuario actualizado satisfactoriamente');
+        setIsShow(false)
+      } else {
+        console.log('valores del data', data)
+        await createUser('/users', data)
+        setErrorMessage('')
+        setFileSelected(false)
+        setFileName('')
+        resetForm();
+        setModalMessage('Usuario creado satisfactoriamente');
+      }
+      reset(emptyFields)
+      setIsModalVisible(true);
+    } catch (error) {
+      setModalMessage('Error al crear o actualizar el usuario');
+      console.log('error', error)
+      setIsModalVisible(true);
+    }
   }
 
   const handleClose = () => { 
-    reset(emptyFields)
+    resetForm();
     setIsShow(false)
+    setDataUser();
   }
   
-
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-    if (file) {
+   if (file) {
       const fileType = file.type;
       if (fileType.startsWith('image/')) {
         setFileSelected(true);
@@ -64,16 +87,11 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
         setErrorMessage('');
         uploadImageToImgBB(file);
       } else {
-        setFileSelected(false);
-        setFileName('');
-        setFileUrl('');
+        resetImageState();
         setErrorMessage('Por favor, selecciona un archivo de imagen (ej. .jpg, .png).');
       }
     } else {
-      setFileSelected(false);
-      setFileName('');
-      setFileUrl('');
-      setErrorMessage('');
+      resetImageState();
     }
   };
 
@@ -93,11 +111,25 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
     }
   };
 
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+  };
+
+  const emptyFields = {
+    first_name: '',
+    last_name: '',
+    email: '',
+    birthday: '',
+    password: '',
+    image_url: ''
+  }
+
   return (
+    <>
     <div className={`flex fixed inset-0 z-30 items-center justify-center transition-all duration-400 bg-blue-950 bg-opacity-20 ${isShow ? 'scale-100' : 'scale-0'}`}>
       <form onSubmit={handleSubmit(onSubmit)} className='bg-white w-80 mx-auto mt-8 rounded-lg p-6 shadow-lg relative'>
 
-      <button onClick={handleClose}
+      <button type="button" onClick={handleClose}
         className="absolute top-3 right-4 text-gray-500 hover:text-gray-700 focus:outline-none">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -109,6 +141,7 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
         <input
           type="text"
           id="first_name"
+          autoComplete="given-name"
           {...register('first_name', { required: true })}
           className="border border-gray-300 w-full px-3 py-2 rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-purple-600"
         />
@@ -129,6 +162,7 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
         <input
           type="email"
           id="email"
+          autoComplete="email"
           {...register('email', { required: true })}
           className="border border-gray-300 w-full px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 invalid:focus:ring-red-400 peer"
         />
@@ -156,7 +190,7 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
       </div>
 
      <div className="mb-4">
-        <label htmlFor="" className="block text-gray-700 font-semibold mb-2">Imagen</label>
+        <label htmlFor="image_url" className="block text-gray-700 font-semibold mb-2">Imagen</label>
         <label htmlFor="image_url" className="bg-violet-100 border-0 rounded-lg text-violet-700 font-semibold px-3 hover:bg-violet-300 cursor-pointer py-2 file:mr-4">
             {fileSelected ? "Archivo seleccionado" : "Seleccionar Archivo"}
           </label>
@@ -177,6 +211,16 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
       </button>
     </form>
   </div>
+  {
+    isModalVisible && (
+      <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-white p-4 rounded shadow-lg text-center">
+          <p>{modalMessage}</p>
+          <button onClick={handleModalClose} className="mt-4 bg-blue-500 px-4 py-2 text-white rounded">Cerrar</button>
+        </div>
+      </div>
+  )}
+  </>
   )
 }
 

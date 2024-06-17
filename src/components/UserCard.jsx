@@ -1,4 +1,3 @@
-import { useState } from "react";
 
 const UserCard = ({ user, setDataUser, setModal, setSelectedUserId, setIsShow, setTitleForm }) => {
 
