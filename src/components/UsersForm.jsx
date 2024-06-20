@@ -63,6 +63,7 @@ const UsersForm = ({ createUser, dataUser, setDataUser, updateUser, isShow, setI
         setModalMessage('Usuario creado satisfactoriamente');
       }
       reset(emptyFields)
+      setIsShow(false)
       setIsModalVisible(true);
     } catch (error) {
       setModalMessage('Error al crear o actualizar el usuario');
